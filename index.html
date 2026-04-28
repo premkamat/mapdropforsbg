@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SBG — Interface Map (ArcGIS Live)</title>
+<link rel="stylesheet" href="https://js.arcgis.com/4.29/esri/themes/light/main.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f0e8;
+  --panel:#faf7f2;
+  --panel2:#f0ebe0;
+  --border:rgba(160,140,110,0.2);
+  --border2:rgba(160,140,110,0.35);
+  --text:#2c2416;
+  --muted:#8a7a62;
+  --accent:#7a5c2e;
+  --accent2:#a07840;
+  --green:#4a7c59;
+  --fh:'Syne',sans-serif;
+  --fm:'DM Mono',monospace;
+}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--fm)}
+#app{display:flex;height:100vh;flex-direction:column}
+
+/* HEADER */
+#hdr{
+  display:flex;align-items:center;gap:14px;padding:10px 20px;
+  background:var(--panel);border-bottom:1px solid var(--border2);
+  flex-shrink:0;z-index:1000;
+  box-shadow:0 1px 4px rgba(120,90,40,0.08)
+}
+#hdr-logo{
+  width:32px;height:32px;border-radius:4px;
+  background:var(--accent);display:flex;align-items:center;justify-content:center;
+  font-family:var(--fh);font-size:12px;font-weight:800;color:#faf7f2;letter-spacing:.02em
+}
+#hdr h1{font-family:var(--fh);font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--text)}
+#hdr .sub{font-size:10px;color:var(--muted);margin-top:1px;letter-spacing:.03em}
+.sp{flex:1}
+.badge{
+  padding:4px 11px;border:1px solid var(--border2);border-radius:3px;
+  font-size:10px;color:var(--accent);letter-spacing:.08em;background:var(--panel2)
+}
+
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+#sb{
+  width:252px;flex-shrink:0;background:var(--panel);
+  border-right:1px solid var(--border2);
+  display:flex;flex-direction:column;overflow-y:auto;z-index:10;
+  box-shadow:2px 0 8px rgba(120,90,40,0.05)
+}
+.sec{padding:13px 15px;border-bottom:1px solid var(--border)}
+.sec h3{
+  font-family:var(--fh);font-size:9px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px
+}
+
+/* AUTH */
+#auth-status{font-size:10px;color:var(--muted);margin-bottom:9px;line-height:1.6}
+.abtn{
+  width:100%;padding:7px 10px;border:1px solid var(--border2);
+  background:var(--panel2);color:var(--text);font-family:var(--fm);
+  font-size:10px;cursor:pointer;border-radius:3px;transition:all .15s;
+  letter-spacing:.04em;text-align:center
+}
+.abtn:hover{border-color:var(--accent2);color:var(--accent);background:#ede5d8}
+.abtn.si{border-color:var(--green);color:var(--green);background:rgba(74,124,89,0.06)}
+
+/* LAYERS */
+.lr{display:flex;align-items:center;gap:9px;padding:5px 0;cursor:pointer;user-select:none}
+.lr:hover .ll{color:var(--text)}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;border:1px solid rgba(0,0,0,0.1)}
+.ll{font-size:10px;color:var(--muted);flex:1;transition:color .15s;line-height:1.3}
+.lt{
+  width:26px;height:14px;border-radius:7px;
+  background:rgba(120,90,40,0.12);position:relative;transition:background .2s;flex-shrink:0
+}
+.lt::after{
+  content:'';position:absolute;top:2px;left:2px;width:10px;height:10px;
+  border-radius:50%;background:var(--muted);transition:all .2s
+}
+.lr.on .lt{background:var(--accent)}
+.lr.on .lt::after{left:14px;background:#faf7f2}
+.lr.on .ll{color:var(--text)}
+#ll-loading{font-size:10px;color:var(--muted);font-style:italic}
+
+/* TIMELINE */
+#yd{
+  font-family:var(--fh);font-size:30px;font-weight:800;
+  color:var(--accent);margin-bottom:8px;letter-spacing:-.02em
+}
+#ys{
+  width:100%;-webkit-appearance:none;height:3px;
+  background:rgba(120,90,40,0.15);border-radius:2px;outline:none;cursor:pointer;margin-bottom:5px
+}
+#ys::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;
+  border-radius:50%;background:var(--accent);cursor:pointer;
+  box-shadow:0 1px 3px rgba(120,90,40,0.3)
+}
+#ys:disabled{opacity:.4;cursor:not-allowed}
+#yr{font-size:9px;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:3px}
+#pb{
+  width:100%;padding:7px;border:1px solid var(--border2);
+  background:var(--panel2);color:var(--text);font-family:var(--fm);
+  font-size:10px;cursor:pointer;border-radius:3px;margin-top:9px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .15s;letter-spacing:.04em
+}
+#pb:hover{border-color:var(--accent2);color:var(--accent);background:#ede5d8}
+#pb.pl{border-color:var(--accent);color:var(--accent);background:rgba(122,92,46,0.07)}
+#tl-note{font-size:9px;color:var(--muted);margin-top:7px;line-height:1.6}
+
+/* YEAR STEP DOTS */
+#year-dots{display:flex;gap:4px;margin-top:6px;align-items:center}
+.ydot{
+  flex:1;height:4px;border-radius:2px;background:rgba(120,90,40,0.15);
+  cursor:pointer;transition:background .15s;position:relative
+}
+.ydot:hover{background:rgba(120,90,40,0.3)}
+.ydot.active{background:var(--accent)}
+.ydot-label{font-size:8px;color:var(--muted);text-align:center;margin-top:3px}
+
+.info{font-size:9px;color:var(--muted);line-height:1.7}
+.info b{color:var(--text);font-weight:500}
+
+/* MAP */
+#viewDiv{flex:1}
+
+/* STATUS BAR */
+#sb2{
+  padding:5px 20px;background:var(--panel);border-top:1px solid var(--border2);
+  font-size:9px;color:var(--muted);display:flex;gap:20px;flex-shrink:0;
+  letter-spacing:.04em;box-shadow:0 -1px 4px rgba(120,90,40,0.05)
+}
+#sb2 span{color:var(--text)}
+
+/* ArcGIS light theme overrides to match tan palette */
+.esri-ui-corner .esri-component{border-radius:4px;overflow:hidden}
+.esri-time-slider{
+  background:var(--panel)!important;
+  border:1px solid var(--border2)!important;
+  border-radius:4px!important;
+  font-family:var(--fm)!important;
+  box-shadow:0 2px 8px rgba(120,90,40,0.12)!important;
+  margin:0 12px 12px!important;
+}
+.esri-time-slider__slider .esri-slider__track{background:rgba(120,90,40,0.15)!important}
+.esri-time-slider__slider .esri-slider__track--range{background:var(--accent)!important}
+.esri-time-slider__slider .esri-slider__thumb{background:var(--accent)!important;border-color:var(--accent)!important}
+.esri-widget{font-family:var(--fm)!important}
+.esri-widget--button{background:var(--panel)!important;border:1px solid var(--border2)!important}
+.esri-legend{background:var(--panel)!important;border:1px solid var(--border2)!important;border-radius:4px!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hdr">
+    <div id="hdr-logo">SBG</div>
+    <div>
+      <h1>Interface Supply Chain</h1>
+      <div class="sub">ArcGIS Live Web Map · Emory Portal</div>
+    </div>
+    <div class="sp"></div>
+    <div class="badge">LIVE</div>
+  </div>
+
+  <div id="main">
+    <div id="sb">
+
+      <div class="sec" style="background:rgba(74,124,89,0.04)">
+        <h3>ArcGIS Sign In</h3>
+        <div id="auth-status">Sign in with your Emory ArcGIS credentials to load the web map and all layers.</div>
+        <button class="abtn" id="abtn" onclick="handleAuth()">Sign In to ArcGIS</button>
+      </div>
+
+      <div class="sec">
+        <h3>Layers</h3>
+        <div id="layer-list"><div id="ll-loading">Sign in to see layers</div></div>
+      </div>
+
+      <div class="sec">
+        <h3>Timeline · 2021–2025</h3>
+        <div id="yd">—</div>
+        <input type="range" id="ys" min="0" max="4" value="0" step="1" oninput="onSlider(this.value)" disabled>
+        <div id="yr"><span>2021</span><span>2025</span></div>
+
+        <div id="year-dots">
+          <div class="ydot active" onclick="jumpYear(0)" title="2021"><div class="ydot-label">21</div></div>
+          <div class="ydot" onclick="jumpYear(1)" title="2022"><div class="ydot-label">22</div></div>
+          <div class="ydot" onclick="jumpYear(2)" title="2023"><div class="ydot-label">23</div></div>
+          <div class="ydot" onclick="jumpYear(3)" title="2024"><div class="ydot-label">24</div></div>
+          <div class="ydot" onclick="jumpYear(4)" title="2025"><div class="ydot-label">25</div></div>
+        </div>
+
+        <button id="pb" onclick="togglePlay()">
+          <span id="pi">▶</span><span id="pl">ANIMATE YEARS</span>
+        </button>
+        <div id="tl-note">
+          Time-enabled layers:<br>
+          · Sales 2021–2025<br>
+          · Recovery 2021–2025<br>
+          · Past Partners 2021–2025
+        </div>
+      </div>
+
+      <div class="sec">
+        <h3>About</h3>
+        <div class="info">
+          <b>Map:</b> SBG_For_Interface<br>
+          <b>Portal:</b> Emory ArcGIS Online<br><br>
+          Loads your web map definition directly — symbology, popups, and time settings all come from ArcGIS.
+        </div>
+      </div>
+
+    </div>
+
+    <div id="viewDiv"></div>
+  </div>
+
+  <div id="sb2">
+    <div>AUTH: <span id="st-auth">Not signed in</span></div>
+    <div>MAP: <span id="st-map">—</span></div>
+    <div>YEAR: <span id="st-yr">—</span></div>
+  </div>
+</div>
+
+<script src="https://js.arcgis.com/4.29/"></script>
+<script>
+const PORTAL_URL = "https://emory.maps.arcgis.com";
+const WEB_MAP_ID = "6c98205cbe1541beb2aa6cdc60f2229e";
+
+// 2021-2025 only — 2019 and 2020 removed
+const TIME_START = new Date("2021-01-01T00:00:00Z");
+const TIME_END   = new Date("2025-12-31T00:00:00Z");
+const YEARS = ["2021","2022","2023","2024","2025"];
+
+let view, webmap, timeSlider, isSignedIn = false;
+
+require([
+  "esri/WebMap",
+  "esri/views/MapView",
+  "esri/identity/OAuthInfo",
+  "esri/identity/IdentityManager",
+  "esri/config",
+  "esri/widgets/TimeSlider",
+  "esri/widgets/Legend",
+  "esri/TimeExtent",
+  "esri/TimeInterval",
+  "esri/core/reactiveUtils"
+], function(WebMap, MapView, OAuthInfo, esriId, esriConfig,
+            TimeSlider, Legend, TimeExtent, TimeInterval, reactiveUtils) {
+
+  esriConfig.portalUrl = PORTAL_URL;
+
+  const oauthInfo = new OAuthInfo({
+    appId: "arcgisWebApps",
+    portalUrl: PORTAL_URL,
+    popup: true
+  });
+  esriId.registerOAuthInfos([oauthInfo]);
+
+  // ── LOAD MAP ──────────────────────────────────────────────────
+  function loadMap() {
+    document.getElementById('st-map').textContent = 'Loading…';
+
+    webmap = new WebMap({
+      portalItem: { id: WEB_MAP_ID, portal: { url: PORTAL_URL } }
+    });
+
+    view = new MapView({
+      container: "viewDiv",
+      map: webmap,
+      ui: { components: ["zoom", "compass"] }
+    });
+
+    view.when(() => {
+      document.getElementById('st-map').textContent = webmap.portalItem?.title || 'Loaded';
+
+      buildLayerList();
+
+      // ── TIME SLIDER ──────────────────────────────────────────
+      const fullExtent = new TimeExtent({ start: TIME_START, end: TIME_END });
+
+      timeSlider = new TimeSlider({
+        container: document.createElement("div"),
+        view: view,
+        mode: "instant",
+        fullTimeExtent: fullExtent,
+        timeVisible: true,
+        loop: true,
+        playRate: 1100,
+        stops: {
+          interval: new TimeInterval({ value: 1, unit: "years" }),
+          timeExtent: fullExtent
+        }
+      });
+
+      // Start at 2021
+      timeSlider.values = [new Date("2021-01-01T00:00:00Z")];
+      view.ui.add(timeSlider, "bottom-leading");
+
+      // Sync sidebar when ArcGIS slider moves
+      reactiveUtils.watch(
+        () => timeSlider.timeExtent,
+        (te) => {
+          if (!te?.start) return;
+          const yr = te.start.getFullYear().toString();
+          const idx = YEARS.indexOf(yr);
+          if (idx < 0) return;
+          document.getElementById('yd').textContent = yr;
+          document.getElementById('st-yr').textContent = yr;
+          document.getElementById('ys').value = idx;
+          updateDots(idx);
+        }
+      );
+
+      // Enable sidebar controls
+      document.getElementById('ys').disabled = false;
+      setYear(0);
+
+      // Legend
+      const legend = new Legend({ view });
+      view.ui.add(legend, "bottom-right");
+
+    }).catch(err => {
+      console.error("Map load error:", err);
+      document.getElementById('st-map').textContent = 'Auth required';
+      document.getElementById('auth-status').textContent =
+        'This map requires Emory ArcGIS credentials. Click sign in.';
+    });
+  }
+
+  // ── LAYER LIST ────────────────────────────────────────────────
+  function buildLayerList() {
+    webmap.load().then(() => {
+      const container = document.getElementById('layer-list');
+      container.innerHTML = '';
+      const colorMap = {
+        'Past Partners': '#8b5e3c',
+        'Past and Prospective': '#c0392b',
+        'Recovery': '#4a7c59',
+        'Sales': '#c0392b',
+        'State Rankings': '#7a5c2e',
+        'Topographic': '#aaa'
+      };
+      webmap.layers.toArray().reverse().forEach(layer => {
+        const ckey = Object.keys(colorMap).find(k => layer.title?.includes(k));
+        const col = colorMap[ckey] || '#8a7a62';
+        const row = document.createElement('div');
+        row.className = 'lr' + (layer.visible ? ' on' : '');
+        row.innerHTML = `<div class="ld" style="background:${col}"></div>
+          <div class="ll">${layer.title}</div>
+          <div class="lt"></div>`;
+        row.onclick = () => {
+          layer.visible = !layer.visible;
+          row.classList.toggle('on', layer.visible);
+        };
+        container.appendChild(row);
+      });
+    });
+  }
+
+  // ── YEAR HELPERS ──────────────────────────────────────────────
+  function setYear(idx) {
+    const yr = YEARS[idx];
+    document.getElementById('yd').textContent = yr;
+    document.getElementById('st-yr').textContent = yr;
+    document.getElementById('ys').value = idx;
+    updateDots(idx);
+    if (timeSlider) {
+      timeSlider.values = [new Date(yr + "-01-01T00:00:00Z")];
+    }
+  }
+
+  function updateDots(activeIdx) {
+    document.querySelectorAll('.ydot').forEach((d, i) => {
+      d.classList.toggle('active', i === activeIdx);
+    });
+  }
+
+  window.jumpYear = function(idx) { setYear(idx); };
+
+  window.onSlider = function(idx) { setYear(parseInt(idx)); };
+
+  // ── PLAY ──────────────────────────────────────────────────────
+  window.togglePlay = function() {
+    if (!timeSlider) return;
+    const btn = document.getElementById('pb');
+    const isPlaying = timeSlider.viewModel.state === 'playing';
+    if (isPlaying) {
+      timeSlider.stop();
+      document.getElementById('pi').textContent = '▶';
+      document.getElementById('pl').textContent = 'ANIMATE YEARS';
+      btn.classList.remove('pl');
+    } else {
+      timeSlider.play();
+      document.getElementById('pi').textContent = '⏹';
+      document.getElementById('pl').textContent = 'STOP';
+      btn.classList.add('pl');
+    }
+  };
+
+  // ── AUTH ──────────────────────────────────────────────────────
+  window.handleAuth = function() {
+    if (isSignedIn) {
+      esriId.destroyCredentials();
+      isSignedIn = false;
+      document.getElementById('abtn').textContent = 'Sign In to ArcGIS';
+      document.getElementById('abtn').classList.remove('si');
+      document.getElementById('st-auth').textContent = 'Signed out';
+      document.getElementById('auth-status').textContent = 'Sign in to access the web map.';
+      return;
+    }
+    esriId.getCredential(PORTAL_URL + "/sharing").then(cred => {
+      isSignedIn = true;
+      document.getElementById('abtn').textContent = `✓ ${cred.userId} — Sign Out`;
+      document.getElementById('abtn').classList.add('si');
+      document.getElementById('st-auth').textContent = cred.userId;
+      document.getElementById('auth-status').textContent = `Signed in as ${cred.userId}`;
+      loadMap();
+    }).catch(() => {
+      document.getElementById('auth-status').textContent = 'Sign in cancelled or failed.';
+    });
+  };
+
+  // ── AUTO-LOAD ─────────────────────────────────────────────────
+  esriId.checkSignInStatus(PORTAL_URL + "/sharing").then(cred => {
+    isSignedIn = true;
+    document.getElementById('abtn').textContent = `✓ ${cred.userId} — Sign Out`;
+    document.getElementById('abtn').classList.add('si');
+    document.getElementById('st-auth').textContent = cred.userId;
+    document.getElementById('auth-status').textContent = `Signed in as ${cred.userId}`;
+    loadMap();
+  }).catch(() => {
+    loadMap(); // try anyway for public maps
+  });
+
+});
+</script>
+</body>
+</html>
